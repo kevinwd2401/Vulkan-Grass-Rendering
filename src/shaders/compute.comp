@@ -36,16 +36,29 @@ struct Blade {
 // 	  uint firstInstance; // = 0
 // } numBlades;
 
+layout(set = 2, binding = 0) readonly buffer InputBlades {
+    Blade blades[];
+} inputData;
+
+layout(set = 2, binding = 1) writeonly buffer OutputBlades {
+    Blade blades[];
+} outputData;
+
 bool inBounds(float value, float bounds) {
     return (value >= -bounds) && (value <= bounds);
 }
 
 void main() {
+
+    uint i = gl_GlobalInvocationID.x;
+    if (i >= uint(inputData.blades.length())) {
+        return;
+    }
 	// Reset the number of blades to 0
-	if (gl_GlobalInvocationID.x == 0) {
+	if (i == 0) {
 		// numBlades.vertexCount = 0;
 	}
-	barrier(); // Wait till all threads reach this point
+	//barrier(); // Wait till all threads reach this point
 
     // TODO: Apply forces on every blade and update the vertices in the buffer
 
@@ -53,4 +66,6 @@ void main() {
 	// to the culled blades buffer
 	// Note: to do this, you will need to use an atomic operation to read and update numBlades.vertexCount
 	// You want to write the visible blades to the buffer without write conflicts between threads
+
+    outputData.blades[i] = inputData.blades[i];
 }
