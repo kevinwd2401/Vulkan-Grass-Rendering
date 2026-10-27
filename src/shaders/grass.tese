@@ -33,7 +33,7 @@ void main() {
 
     float angle = inV0[0].w;
     vec3 sideways = vec3(cos(angle), 0.0, sin(angle));
-    float width = inV2[0].w * (1.0 - v);
+    float width = inV2[0].w * (1.0 - v) * (1.0 + 0.5 * v);
     vec3 position = center + (u - 0.5) * width * sideways;
 
     gl_Position = camera.proj * camera.view * vec4(position, 1.0);

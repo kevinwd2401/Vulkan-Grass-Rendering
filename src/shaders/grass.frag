@@ -14,5 +14,11 @@ layout(location = 0) out vec4 outColor;
 void main() {
     // TODO: Compute fragment color
 
-    outColor = mix (vec4(0.0, 0.6, 0.0, 1.0), vec4(0.04, 0.78, 0.29, 1.0), inHeight);
+    
+    vec3 color = mix (vec3(0.0, 0.4, 0.0), vec3(0.038, 0.78, 0.24), inHeight);
+
+    // yellow at tips
+    color = mix(color, vec3(0.34, 0.48, 0.09), smoothstep(0.85, 1.0, inHeight));
+
+    outColor = vec4(color, 1.0);
 }
