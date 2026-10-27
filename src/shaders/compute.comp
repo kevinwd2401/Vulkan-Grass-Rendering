@@ -55,6 +55,38 @@ bool inBounds(float value, float bounds) {
     return (value >= -bounds) && (value <= bounds);
 }
 
+bool inFrustum(vec4 clip) {
+    if (clip.w <= 0.0) return false;
+
+    float margin = 0.02 * clip.w;
+    return inBounds(clip.x, clip.w + margin) &&
+           inBounds(clip.y, clip.w + margin) &&
+           clip.z >= 0.0 && clip.z <= clip.w;
+}
+
+uint hashBlade(uint x) {
+    x ^= x >> 16;
+    x *= 0x7feb352du;
+    x ^= x >> 15;
+    x *= 0x846ca68bu;
+    x ^= x >> 16;
+    return x;
+}
+
+bool distanceCull(float camDist, uint bladeIndex) {
+    const float MAX_DISTANCE = 50.0;
+    if (camDist >= MAX_DISTANCE) {
+        return true;
+    } else if (camDist >= MAX_DISTANCE * (3.0 / 4.0)) {
+        // 0.3 blades kept
+        return hashBlade(bladeIndex) % 10u >= 3u;
+    } else if (camDist >= MAX_DISTANCE / 2.0) {
+        // 0.6 blades kept
+        return hashBlade(bladeIndex) % 10u >= 6u;
+    }
+    return false;
+}
+
 void main() {
 
     uint i = gl_GlobalInvocationID.x;
@@ -63,7 +95,7 @@ void main() {
     }
 	// Reset the number of blades to 0
 	if (i == 0) {
-		// numBlades.vertexCount = 0;
+		numBlades.vertexCount = 0;
 	}
 	barrier(); // Wait till all threads reach this point
 
@@ -112,10 +144,43 @@ void main() {
 	// TODO: Cull blades that are too far away or not in the camera frustum and write them
 	// to the culled blades buffer
 	// Note: to do this, you will need to use an atomic operation to read and update numBlades.vertexCount
-	// You want to write the visible blades to the buffer without write conflicts between threads\
+	// You want to write the visible blades to the buffer without write conflicts between threads
 
+    bool visible = true;
+
+    // orientation culling
+    vec3 cameraForward = -normalize(vec3(
+        camera.view[0][2],
+        camera.view[1][2],
+        camera.view[2][2]
+    ));
+    if (abs(dot(cameraForward, up)) < 0.4 && abs(dot(cameraForward, frontDir)) < 0.12) {
+        visible = false;
+    }
+
+    // frustum culling
+    vec3 m = 0.25 * blade.v0.xyz + 0.5 * blade.v1.xyz + 0.25 * blade.v2.xyz;
+    mat4 vp = camera.proj * camera.view;
+    vec4 clipPos0 = vp * vec4(blade.v0.xyz, 1.0);
+    vec4 clipPos2 = vp * vec4(blade.v2.xyz, 1.0);
+    vec4 clipPosm = vp * vec4(m, 1.0);
+
+    if (!inFrustum(clipPos0) && !inFrustum(clipPos2) && !inFrustum(clipPosm)) {
+        visible = false;
+    }
+
+    //distance culling
+    const float MAX_DISTANCE = 50.0;
+
+    float distanceToCamera =
+        length((camera.view * vec4(blade.v0.xyz, 1.0)).xyz);
+
+    visible = visible && !distanceCull(distanceToCamera, i);
 
     inputData.blades[i] = blade;
-    outputData.blades[i] = blade;
+    if (visible) {
+        uint slot = atomicAdd(numBlades.vertexCount, 1);
+        outputData.blades[slot] = blade;
+    }
     
 }
