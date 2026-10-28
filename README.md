@@ -9,11 +9,11 @@ Vulkan Grass Rendering
 
 ![Final grass rendering with animated wind, height-based coloring, and distance fog](img/my_grass_final.gif)
 
+CMakeLists changes: Updated the CMakeLists version
+
 ## Summary
 
 This project simulates and renders a field of grass in Vulkan using techniques described in this paper, [Responsive Real-Time Grass Rendering for General 3D Scenes](https://www.cg.tuwien.ac.at/research/publications/2017/JAHRMANN-2017-RRTG/JAHRMANN-2017-RRTG-draft.pdf). Each blade is represented by a quadratic Bezier curve, updated by a compute shader, and expanded into a tapered surface by the tessellation pipeline. Gravity, recovery, and wind forces are simulated, while three culling tests reduce the amount of grass sent to the graphics pipeline.
-
-The final rendering combines animated motion with a gradient fragment shader with distance fog.
 
 ### Features Implemented
 
@@ -90,4 +90,4 @@ This trend is consistent with the implementation: every blade receives a compute
 
 With a 0.9 orientation threshold, **Orientation culling** reduces frame time from **0.110 to 0.099 ms** at 4,096 blades and from **7.313 to 6.857 ms** at 262,144 blades. These are reductions of **10.0%** and **6.2%**, respectively, relative to each configuration with orientation culling disabled. Edge-on blades contribute little visible area but still incur geometry-processing work, so removing them can save time.
 
-**Frustum culling** has the larger measured effect. Enabling it reduces frame time from **0.130 to 0.099 ms** at 4,096 blades and from **8.846 to 6.857 ms** at 262,144 blades: reductions of **23.8%** and **22.5%**. At the higher count, that saves **1.989 ms per frame**. This large improvement is likely due much of the grass plane being outside of the starting position camera's frustum. Rejecting off-screen blades before the graphics pipeline avoids their tessellation and vertex-processing work.
+**Frustum culling** has the larger measured effect. Enabling it reduces frame time from **0.130 to 0.099 ms** at 4,096 blades and from **8.846 to 6.857 ms** at 262,144 blades: reductions of **23.8%** and **22.5%**. At the higher count, that saves **1.989 ms per frame**. This large improvement is likely due to much of the grass plane being outside of the starting position camera's frustum. Rejecting off-screen blades before the graphics pipeline avoids their tessellation and vertex-processing work.
