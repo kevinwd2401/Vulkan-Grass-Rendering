@@ -15,6 +15,7 @@ layout(location = 2) in vec4 inV2[];
 layout(location = 3) in vec4 inUp[];
 
 layout(location = 0) out float outHeight;
+layout(location = 1) out vec3 outViewPosition;
 
 void main() {
     float u = gl_TessCoord.x;
@@ -36,6 +37,8 @@ void main() {
     float width = inV2[0].w * (1.0 - v) * (1.0 + 0.5 * v);
     vec3 position = center + (u - 0.5) * width * sideways;
 
-    gl_Position = camera.proj * camera.view * vec4(position, 1.0);
+    vec4 viewPosition = camera.view * vec4(position, 1.0);
+    gl_Position = camera.proj * viewPosition;
+    outViewPosition = viewPosition.xyz;
     outHeight = v;
 }
